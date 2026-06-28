@@ -18,7 +18,6 @@ interface QueueItem {
 
 const INITIAL_QUEUE: QueueItem[] = [
   { id: 'Q-10023', project: 'Finance Recon Batch', worker: 'Worker_Node_04', status: 'Processing', enqueued: '10:45:02', priority: 'High' },
-  { id: 'Q-10022', project: 'HR Onboarding (EU)', worker: 'Worker_Node_01', status: 'Failed', enqueued: '10:44:11', priority: 'Normal' },
   { id: 'Q-10021', project: 'Supply Chain Sync', worker: 'Unassigned', status: 'Pending', enqueued: '10:42:00', priority: 'Low' },
   { id: 'Q-10020', project: 'Audit Log Archival', worker: 'Worker_Node_02', status: 'Processing', enqueued: '10:40:15', priority: 'Normal' },
   { id: 'Q-10019', project: 'Client Report Gen', worker: 'Unassigned', status: 'Pending', enqueued: '10:38:30', priority: 'Critical' },
