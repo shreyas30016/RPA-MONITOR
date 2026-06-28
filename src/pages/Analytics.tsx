@@ -35,11 +35,14 @@ export const Analytics = () => {
       const current = workflowMap.get(row.project_name) || 0;
       workflowMap.set(row.project_name, current + (row.employee_hours_saved || 0));
     });
-    const sortedWorkflows = Array.from(workflowMap.entries())
+    const sortedEntries = Array.from(workflowMap.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map(entry => {
-        const pct = baseHours > 0 ? Math.round((entry[1] / baseHours) * 100) : 0;
+      .slice(0, 4);
+
+    const maxHours = sortedEntries.length > 0 ? sortedEntries[0][1] : 1;
+
+    const sortedWorkflows = sortedEntries.map(entry => {
+        const pct = Math.round((entry[1] / maxHours) * 100);
         return { name: entry[0], hours: formatNumber(entry[1] * multiplier) + ' hrs', pct };
       });
 
@@ -187,7 +190,7 @@ export const Analytics = () => {
                     <span className="font-data-sm text-data-sm text-primary">{w.hours}</span>
                   </div>
                   <div className="w-full bg-background rounded-full h-2 relative">
-                    <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${w.pct}%` }}></div>
+                    <div className="bg-success h-2 rounded-full transition-all duration-500" style={{ width: `${w.pct}%` }}></div>
                     {/* Tooltip on hover */}
                     <div className="absolute -top-7 right-0 bg-surface border border-border px-2 py-0.5 rounded text-[10px] text-on-surface shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                       {w.pct}% utilization
