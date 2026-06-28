@@ -159,10 +159,10 @@ export const QueueMonitor = () => {
                           onChange={e => handlePriorityChange(item.id, e.target.value as Priority)}
                           className={`text-[10px] font-label-caps px-2 py-0.5 rounded border outline-none cursor-pointer ${PRIORITY_COLORS[item.priority]}`}
                         >
-                          <option>Low</option>
-                          <option>Normal</option>
-                          <option>High</option>
-                          <option>Critical</option>
+                          <option className="bg-surface text-on-surface" value="Low">Low</option>
+                          <option className="bg-surface text-on-surface" value="Normal">Normal</option>
+                          <option className="bg-surface text-on-surface" value="High">High</option>
+                          <option className="bg-surface text-on-surface" value="Critical">Critical</option>
                         </select>
                       ) : (
                         <span className="text-[10px] font-label-caps text-on-surface-muted">—</span>
