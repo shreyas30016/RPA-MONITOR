@@ -18,7 +18,7 @@ import type { RPARow } from '../types/rpa.types'
 import { useToast } from '../contexts/ToastContext'
 import { useSettings } from '../contexts/SettingsContext'
 import { AnalyticsOverlay } from '../components/AnalyticsOverlay'
-import { exportAsCSVAsync } from '../utils/exportUtils'
+import { exportToCSV } from '../utils/exportUtils'
 
 const BandwidthMetric = () => {
   const { settings } = useSettings();
@@ -131,7 +131,7 @@ export const Dashboard = () => {
     const filename = `rpa_snapshot_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}.csv`
     
     try {
-      const duration = await exportAsCSVAsync(viewData as unknown as Record<string, unknown>[], filename)
+      const duration = await exportToCSV(viewData as unknown as Record<string, unknown>[], filename)
       addToast(`Snapshot exported successfully\n\nRows exported: ${viewData.length}\nExport duration: ${duration} ms\nFilename: ${filename}`, 'success')
     } finally {
       setIsExporting(false)

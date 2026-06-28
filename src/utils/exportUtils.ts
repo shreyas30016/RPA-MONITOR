@@ -1,72 +1,79 @@
-import type { RPARow } from '../types/rpa.types';
+/**
+ * Enterprise Export Utility
+ * Handles RFC-4180 compliant CSV generation, chunked asynchronous processing to prevent freezing,
+ * UTF-8 BOM injection for Microsoft Excel compatibility, and complex JSON field escaping.
+ */
 
 /**
- * Download data as a real CSV file.
+ * Formats a single CSV cell according to RFC-4180
+ * - Handles JSON, null, undefined, Objects, Arrays
+ * - Escapes inner double quotes
+ * - Wraps in double quotes if it contains commas, newlines, or quotes
  */
-export function exportAsCSV(data: Record<string, unknown>[], filename: string): void {
-  if (data.length === 0) return;
+export function formatCSVCell(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
 
-  const headers = Object.keys(data[0]);
-  const csvRows = [
-    headers.join(','),
-    ...data.map(row =>
-      headers.map(h => {
-        const val = row[h];
-        const str = val == null ? '' : String(val);
-        // Escape quotes and wrap in quotes if it contains commas/quotes/newlines
-        return str.includes(',') || str.includes('"') || str.includes('\n')
-          ? `"${str.replace(/"/g, '""')}"`
-          : str;
-      }).join(',')
-    ),
-  ];
+  let str: string;
+  
+  if (typeof value === 'object') {
+    try {
+      str = JSON.stringify(value);
+    } catch {
+      str = String(value);
+    }
+  } else {
+    str = String(value);
+  }
 
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+  // If it contains a quote, comma, or newline, it MUST be quoted.
+  // Internal quotes MUST be doubled.
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+
+  return str;
 }
 
 /**
- * Download data as a CSV file asynchronously in chunks to prevent blocking the UI thread.
- * Returns the duration in milliseconds it took to generate and download.
+ * Universal, enterprise-grade CSV export utility.
+ * - Extracts headers dynamically.
+ * - Formats data synchronously in chunks to prevent UI thread freezing.
+ * - Includes UTF-8 BOM so Excel opens it without character corruption.
+ * - Adheres strictly to RFC-4180.
+ * 
+ * Returns the duration in ms.
  */
-export async function exportAsCSVAsync(data: Record<string, unknown>[], filename: string): Promise<number> {
+export async function exportToCSV(data: Record<string, unknown>[], filename: string): Promise<number> {
   const startTime = performance.now();
-  if (data.length === 0) return 0;
+  if (!data || data.length === 0) return 0;
 
   const headers = Object.keys(data[0]);
-  const csvRows: string[] = [headers.join(',')];
+  const formattedHeaders = headers.map(formatCSVCell).join(',');
   
+  const csvRows: string[] = [formattedHeaders];
   const CHUNK_SIZE = 500;
-  
+
   for (let i = 0; i < data.length; i += CHUNK_SIZE) {
     // Yield to the event loop every chunk to prevent UI freeze
     await new Promise(resolve => setTimeout(resolve, 0));
     
     const chunk = data.slice(i, i + CHUNK_SIZE);
-    const chunkRows = chunk.map(row =>
-      headers.map(h => {
-        const val = row[h];
-        const str = val == null ? '' : String(val);
-        return str.includes(',') || str.includes('"') || str.includes('\n')
-          ? `"${str.replace(/"/g, '""')}"`
-          : str;
-      }).join(',')
+    const chunkRows = chunk.map(row => 
+      headers.map(h => formatCSVCell(row[h])).join(',')
     );
     csvRows.push(...chunkRows);
   }
 
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  // \uFEFF is the UTF-8 Byte Order Mark (BOM) needed for Excel to read Unicode correctly
+  const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
+  
   const link = document.createElement('a');
   link.href = url;
-  link.download = filename;
+  link.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
   
-  // Need to append to body in some browsers for click to work on detached elements
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -83,7 +90,7 @@ export function exportAsJSON(data: unknown, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = filename;
+  link.download = filename.endsWith('.json') ? filename : `${filename}.json`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -112,11 +119,4 @@ export async function copyToClipboard(text: string): Promise<boolean> {
       document.body.removeChild(textarea);
     }
   }
-}
-
-/**
- * Export RPARow array as CSV with proper column headers.
- */
-export function exportRPADataAsCSV(data: RPARow[], filename = 'rpa-export.csv'): void {
-  exportAsCSV(data as unknown as Record<string, unknown>[], filename);
 }

@@ -1,5 +1,6 @@
 import { TopHeader } from '../components/layout/TopHeader';
 import { useState, useMemo } from 'react';
+import { exportToCSV } from '../utils/exportUtils';
 
 type AuditLog = {
   id: string;
@@ -41,24 +42,21 @@ export const AuditLogs = () => {
     });
   }, [searchQuery, statusFilter]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (filteredLogs.length === 0) return;
-    const headers = ['Event ID', 'Time (UTC)', 'User / Principal', 'Action', 'Resource', 'Status', 'Source IP', 'Metadata JSON'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredLogs.map(log => 
-        [log.id, log.time, log.user, `"${log.action}"`, `"${log.resource}"`, log.status, log.ip, `"${log.metadata.replace(/"/g, '""')}"`].join(',')
-      )
-    ].join('\\n');
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const exportData = filteredLogs.map(log => ({
+      'Event ID': log.id,
+      'Time (UTC)': log.time,
+      'User / Principal': log.user,
+      Action: log.action,
+      Resource: log.resource,
+      Status: log.status,
+      'Source IP': log.ip,
+      'Metadata JSON': log.metadata
+    }));
+    
+    await exportToCSV(exportData as Record<string, unknown>[], `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   const handleFilterClick = () => {

@@ -1,7 +1,7 @@
 import { TopHeader } from '../components/layout/TopHeader';
 import { useState, useMemo } from 'react';
 import { useToast } from '../contexts/ToastContext';
-import { exportAsCSV } from '../utils/exportUtils';
+import { exportToCSV } from '../utils/exportUtils';
 
 type DateRange = 'Last 30 Days' | 'This Quarter' | 'YTD';
 type Department = 'All' | 'Finance' | 'HR' | 'IT' | 'Operations';
@@ -94,7 +94,7 @@ export const Analytics = () => {
     return { blocks, peakTimeStr };
   }, [dateRange, department]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = metrics.workflows.map(w => ({
       Workflow: w.name,
       'Hours Saved': w.hours,
@@ -102,8 +102,8 @@ export const Analytics = () => {
       'Date Range': dateRange,
       Department: department,
     }));
-    exportAsCSV(exportData as Record<string, unknown>[], 'rpa-analytics-report.csv');
-    addToast('Export complete.', 'success');
+    await exportToCSV(exportData as Record<string, unknown>[], 'rpa-analytics-report.csv');
+    addToast('Analytics report exported as CSV', 'success');
   };
 
   return (
