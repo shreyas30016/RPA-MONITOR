@@ -31,6 +31,51 @@ export function exportAsCSV(data: Record<string, unknown>[], filename: string): 
 }
 
 /**
+ * Download data as a CSV file asynchronously in chunks to prevent blocking the UI thread.
+ * Returns the duration in milliseconds it took to generate and download.
+ */
+export async function exportAsCSVAsync(data: Record<string, unknown>[], filename: string): Promise<number> {
+  const startTime = performance.now();
+  if (data.length === 0) return 0;
+
+  const headers = Object.keys(data[0]);
+  const csvRows: string[] = [headers.join(',')];
+  
+  const CHUNK_SIZE = 500;
+  
+  for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+    // Yield to the event loop every chunk to prevent UI freeze
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
+    const chunk = data.slice(i, i + CHUNK_SIZE);
+    const chunkRows = chunk.map(row =>
+      headers.map(h => {
+        const val = row[h];
+        const str = val == null ? '' : String(val);
+        return str.includes(',') || str.includes('"') || str.includes('\n')
+          ? `"${str.replace(/"/g, '""')}"`
+          : str;
+      }).join(',')
+    );
+    csvRows.push(...chunkRows);
+  }
+
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  
+  // Need to append to body in some browsers for click to work on detached elements
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  return Math.round(performance.now() - startTime);
+}
+
+/**
  * Download data as a JSON file.
  */
 export function exportAsJSON(data: unknown, filename: string): void {

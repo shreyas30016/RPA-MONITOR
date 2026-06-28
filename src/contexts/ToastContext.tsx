@@ -51,7 +51,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             <span className="material-symbols-outlined text-[20px]">
               {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
             </span>
-            <span className="font-body-sm text-body-sm font-medium">{toast.message}</span>
+            <span className="font-body-sm text-body-sm font-medium whitespace-pre-line">{toast.message}</span>
           </div>
         ))}
       </div>

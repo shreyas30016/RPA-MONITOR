@@ -18,7 +18,7 @@ import type { RPARow } from '../types/rpa.types'
 import { useToast } from '../contexts/ToastContext'
 import { useSettings } from '../contexts/SettingsContext'
 import { AnalyticsOverlay } from '../components/AnalyticsOverlay'
-import { exportAsCSV } from '../utils/exportUtils'
+import { exportAsCSVAsync } from '../utils/exportUtils'
 
 const BandwidthMetric = () => {
   const { settings } = useSettings();
@@ -72,6 +72,7 @@ export const Dashboard = () => {
   const [selectedRow, setSelectedRow] = useState<RPARow | null>(null)
   const [isNewRunModalOpen, setIsNewRunModalOpen] = useState(false)
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Handlers for Drawer/Modal
 
@@ -118,13 +119,23 @@ export const Dashboard = () => {
     }
   }
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (viewData.length === 0) {
-      addToast('No data to export.', 'error')
+      addToast('No records available to export.', 'error')
       return
     }
-    exportAsCSV(viewData as unknown as Record<string, unknown>[], `dashboard_export_${new Date().toISOString().split('T')[0]}.csv`)
-    addToast(`Export complete. ${viewData.length} records downloaded.`, 'success')
+    
+    setIsExporting(true)
+    const d = new Date()
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const filename = `rpa_snapshot_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}.csv`
+    
+    try {
+      const duration = await exportAsCSVAsync(viewData as unknown as Record<string, unknown>[], filename)
+      addToast(`Snapshot exported successfully\n\nRows exported: ${viewData.length}\nExport duration: ${duration} ms\nFilename: ${filename}`, 'success')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -159,10 +170,13 @@ export const Dashboard = () => {
 
         <button 
           onClick={handleExportCSV}
-          className="px-3 py-1.5 rounded border border-border text-on-surface font-body-xs hover:bg-surface-hover transition-colors flex items-center gap-1"
+          disabled={isExporting}
+          className={`px-3 py-1.5 rounded border border-border font-body-xs transition-colors flex items-center gap-1 ${
+            isExporting ? 'bg-surface-container text-on-surface-muted cursor-wait' : 'text-on-surface hover:bg-surface-hover'
+          }`}
           title="Export current view as CSV"
         >
-          <span className="material-symbols-outlined text-[16px]">download</span> Export
+          <span className="material-symbols-outlined text-[16px]">download</span> {isExporting ? 'Exporting...' : 'Export Snapshot'}
         </button>
         <button 
           onClick={() => setIsNewRunModalOpen(true)}
