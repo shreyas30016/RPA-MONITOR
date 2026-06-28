@@ -91,10 +91,10 @@ export const AuditLogs = () => {
                   type="text"
                 />
               </div>
-              <button onClick={handleFilterClick} className="px-3 py-2 bg-surface border border-border rounded-lg text-on-surface hover:bg-surface-hover flex items-center gap-2 transition-colors">
+              <button onClick={handleFilterClick} className="whitespace-nowrap px-3 py-2 bg-surface border border-border rounded-lg text-on-surface hover:bg-surface-hover flex items-center gap-2 transition-colors">
                 <span className="material-symbols-outlined text-[18px]">filter_list</span> {statusFilter ? `Filter: ${statusFilter}` : 'Filter'}
               </button>
-              <button onClick={handleExportCSV} className="px-3 py-2 bg-surface border border-border rounded-lg text-on-surface hover:bg-surface-hover flex items-center gap-2 transition-colors">
+              <button onClick={handleExportCSV} className="whitespace-nowrap px-3 py-2 bg-surface border border-border rounded-lg text-on-surface hover:bg-surface-hover flex items-center gap-2 transition-colors">
                 <span className="material-symbols-outlined text-[18px]">download</span> Export CSV
               </button>
             </div>
